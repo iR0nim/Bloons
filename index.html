@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Bloons-like Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Simple Bloons</h1>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div>Lives: <span id="lives">20</span></div>
+            <div>Money: <span id="money">100</span></div>
+            <div>Wave: <span id="wave">0</span></div>
+            <button id="startWaveBtn">Start Wave</button>
+            <div id="tower-select">
+                <p>Click canvas to place tower (Cost: <span id="towerCost">50</span>)</p>
+                <div id="placement-indicator" style="display: none;"></div>
+            </div>
+            <div id="gameOver" style="display: none;">GAME OVER</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
