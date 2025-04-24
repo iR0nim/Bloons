@@ -291,4 +291,87 @@ function placeTower(event) { /* ... (no changes needed) ... */
     const mouseX = event.clientX - rect.left; const mouseY = event.clientY - rect.top;
     if (money >= TOWER_COST) {
         if (!isPositionOnPath(mouseX, mouseY)) {
-            t
+            towers.push(new Tower(mouseX, mouseY)); money -= TOWER_COST; updateUI();
+        } else { console.log("Cannot place tower on path!"); }
+    } else { console.log("Not enough money!"); }
+}
+
+function updatePlacementIndicator() {
+    if (gameOver || !placingTower) { placementIndicator.style.display = 'none'; return; }
+    const rect = canvas.getBoundingClientRect();
+    const indicatorSize = TOWER_RANGE * 2;
+    const indicatorX = currentMousePos.x - TOWER_RANGE + rect.left + window.scrollX;
+    const indicatorY = currentMousePos.y - TOWER_RANGE + rect.top + window.scrollY;
+    placementIndicator.style.left = `${indicatorX}px`;
+    placementIndicator.style.top = `${indicatorY}px`;
+    placementIndicator.style.width = `${indicatorSize}px`;
+    placementIndicator.style.height = `${indicatorSize}px`;
+
+    // Use theme colors for indicator border
+    if (money >= TOWER_COST && !isPositionOnPath(currentMousePos.x, currentMousePos.y)) {
+        placementIndicator.style.borderColor = themeColors.indicatorValid; // Use theme color
+        placementIndicator.style.display = 'block';
+        canvas.style.cursor = 'crosshair';
+    } else {
+        placementIndicator.style.borderColor = themeColors.indicatorInvalid; // Use theme color
+        placementIndicator.style.display = 'block';
+        canvas.style.cursor = 'not-allowed';
+    }
+}
+
+// --- Game Loop (no functional changes needed, drawing uses theme colors now) ---
+function gameLoop() {
+    if (gameOver) {
+        gameOverEl.style.display = 'block'; placementIndicator.style.display = 'none';
+        canvas.style.cursor = 'default'; return;
+    }
+    // --- Update ---
+    if (waveInProgress) { spawnBalloon(); }
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        balloons[i].move();
+        if (balloons[i].popped && balloons[i].health <= 0) { balloons.splice(i, 1); }
+    }
+    for (const tower of towers) {
+        tower.updateCooldown(); const target = tower.findTarget();
+        if (target) { tower.shoot(target); }
+    }
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        projectiles[i].move(); let hit = false;
+        if (projectiles[i].checkHit()) { projectiles[i].target.takeDamage(projectiles[i].damage); hit = true; }
+        if (hit || projectiles[i].isOutOfBounds()) { projectiles.splice(i, 1); }
+    }
+    if (waveInProgress && balloons.length === 0 && balloonsToSpawn === 0) {
+        waveInProgress = false; startWaveBtn.disabled = false;
+    }
+    // --- Draw ---
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawPath(); // Uses themeColors.path now
+    towers.forEach(tower => tower.draw()); // Uses themeColors.tower now
+    balloons.forEach(balloon => balloon.draw()); // Uses themeColors.balloon* now
+    projectiles.forEach(projectile => projectile.draw()); // Uses themeColors.projectile now
+    updatePlacementIndicator(); // Uses themeColors.indicator* now
+
+    requestAnimationFrame(gameLoop);
+}
+
+// --- Event Listeners ---
+startWaveBtn.addEventListener('click', startNextWave);
+canvas.addEventListener('click', placeTower);
+canvas.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    currentMousePos.x = event.clientX - rect.left;
+    currentMousePos.y = event.clientY - rect.top;
+});
+canvas.addEventListener('mouseleave', () => {
+     placementIndicator.style.display = 'none';
+     canvas.style.cursor = 'default';
+});
+canvas.addEventListener('mouseenter', () => {
+    if (placingTower && !gameOver) { placementIndicator.style.display = 'block'; }
+});
+
+// --- Initial Setup ---
+document.body.classList.add('dark-mode'); // Apply dark mode by default
+updateThemeColors(); // Read initial theme colors from CSS
+updateUI(); // Set initial UI values
+requestAnimationFrame(gameLoop); // Start the game!
